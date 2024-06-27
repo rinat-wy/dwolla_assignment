@@ -1,0 +1,41 @@
+name: Deploy Lambda Function
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+permissions:
+  id-token: write
+  contents: read
+env:
+  AWS_REGION: "us-east-1"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "${{ vars.IAM_ROLE }}"
+          role-session-name: GitHubActionsRoleSession
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Format Terraform Configuration
+        run: terraform fmt -check
+
+      - name: Plan Terraform Deployment
+        run: terraform plan -input=false
+
+      - name: Apply Terraform Changes
+        run: terraform apply -auto-approve -input=false
+
+    
